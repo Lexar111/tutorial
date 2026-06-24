@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OP/PR/01 — Marquee Demo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --ink:#1B2A41;
+  --steel:#3D6494;
+  --orange:#C9602B;
+  --gray:#7C8794;
+  --line:#E4E0D2;
+  --paper:#FBFAF6;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:'IBM Plex Sans',sans-serif;}
+
+.stage{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:22px;
+  padding:40px 20px;
+  background:
+    radial-gradient(circle at 18% 22%, #F7D9C4 0%, transparent 45%),
+    radial-gradient(circle at 85% 15%, #D9E3F2 0%, transparent 50%),
+    radial-gradient(circle at 75% 85%, #E7D9EE 0%, transparent 50%),
+    radial-gradient(circle at 10% 85%, #DDEAE6 0%, transparent 45%),
+    var(--paper);
+}
+
+.caption{
+  font-family:'Oswald',sans-serif;
+  font-weight:600;
+  font-size:15px;
+  letter-spacing:0.4px;
+  color:var(--ink);
+  text-transform:uppercase;
+  opacity:0.85;
+}
+
+.window-card{
+  position:relative;
+  width:760px;
+  height:520px;
+  background:#fff;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 30px 60px -20px rgba(27,42,65,0.35), 0 0 0 1px rgba(27,42,65,0.05);
+}
+
+.chrome{
+  height:42px;
+  background:var(--paper);
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0 16px;
+  position:relative;
+  z-index:5;
+}
+.chrome .dot{width:9px;height:9px;border-radius:50%;background:var(--line);}
+.chrome .doclabel{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  color:var(--gray);
+  margin-left:8px;
+}
+
+.viewport{
+  position:relative;
+  width:100%;
+  height:478px;
+  overflow:hidden;
+}
+
+.scroll-content{
+  position:absolute;
+  top:0;left:0;width:100%;
+  padding:26px 32px 60px;
+  will-change:transform;
+  transition:transform .75s cubic-bezier(.4,0,.2,1);
+}
+
+.section-tag{
+  font-family:'Oswald',sans-serif;
+  font-size:11px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--steel);
+  margin:0 0 6px;
+}
+.section-title{
+  font-family:'Oswald',sans-serif;
+  font-size:19px;
+  font-weight:600;
+  color:var(--ink);
+  margin:0 0 16px;
+}
+
+.field-row{
+  display:flex;
+  gap:14px;
+  align-items:baseline;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  margin-bottom:8px;
+  background:var(--paper);
+}
+.field-row .flabel{
+  min-width:150px;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--ink);
+}
+.field-row .fval{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+  color:var(--steel);
+}
+
+table.mocktable{
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:22px;
+  font-size:12px;
+}
+table.mocktable th{
+  text-align:left;
+  font-family:'Oswald',sans-serif;
+  font-size:10.5px;
+  letter-spacing:0.6px;
+  text-transform:uppercase;
+  color:var(--gray);
+  border-bottom:2px solid var(--line);
+  padding:6px 8px;
+}
+table.mocktable td{
+  padding:8px;
+  border-bottom:1px solid var(--line);
+  color:#33485E;
+}
+table.mocktable tr.empty td{ color:var(--gray); font-style:italic;}
+
+.spacer{height:36px;}
+
+/* cursor + avatar */
+.cursor{
+  position:absolute;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  z-index:40;
+  transition: left .75s cubic-bezier(.4,0,.2,1), top .75s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+  pointer-events:none;
+}
+.cursor .pointer{
+  width:16px;height:20px;
+  position:relative;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
+}
+.cursor .pointer svg{ width:100%;height:100%; }
+.cursor .avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--steel),var(--ink));
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;
+  border:2px solid #fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+
+.tag-bubble{
+  position:absolute;
+  z-index:41;
+  font-family:'Oswald',sans-serif;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.4px;
+  padding:7px 12px;
+  border-radius:6px;
+  color:#fff;
+  white-space:nowrap;
+  opacity:0;
+  transition: left .75s cubic-bezier(.4,0,.2,1), top .75s cubic-bezier(.4,0,.2,1), opacity .35s ease;
+  box-shadow:0 6px 14px rgba(0,0,0,.18);
+}
+
+.highlight-box{
+  position:absolute;
+  z-index:30;
+  border:2px solid var(--orange);
+  border-radius:8px;
+  background:rgba(201,96,43,0.08);
+  opacity:0;
+  transition: left .75s cubic-bezier(.4,0,.2,1), top .75s cubic-bezier(.4,0,.2,1), width .75s cubic-bezier(.4,0,.2,1), height .75s cubic-bezier(.4,0,.2,1), opacity .35s ease;
+}
+
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.controls button{
+  font-family:'Oswald',sans-serif;
+  font-size:12px;
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+  font-weight:600;
+  padding:8px 16px;
+  border-radius:5px;
+  border:2px solid var(--ink);
+  background:var(--ink);
+  color:#fff;
+  cursor:pointer;
+}
+.note{
+  font-size:12px;
+  color:var(--gray);
+  max-width:480px;
+  text-align:center;
+  line-height:1.5;
+}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="caption">OP / PR / 01 — Field Guide Loop</div>
+
+  <div class="window-card" id="card">
+    <div class="chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="doclabel">OP-PR-01_Mfg_process_design.pdf</span>
+    </div>
+    <div class="viewport" id="viewport">
+      <div class="scroll-content" id="scrollContent">
+
+        <div class="section-tag">Page 1 — Header</div>
+        <div class="section-title">Document Identity</div>
+        <div class="field-row" id="doc-no-field" data-tag="ref" data-note="Reference only — never changes">
+          <span class="flabel">Doc No.</span><span class="fval">OP / PR / 01</span>
+        </div>
+        <div class="field-row" id="rev-no-field" data-tag="qa" data-note="QA controlled — updated every revision">
+          <span class="flabel">Rev. No. / Date</span><span class="fval">16 · 10.06.2026</span>
+        </div>
+        <div class="field-row">
+          <span class="flabel">Origin Date</span><span class="fval">20.11.2006</span>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="section-tag">Section 4</div>
+        <div class="section-title">Purpose, Scope &amp; Ownership</div>
+        <div class="field-row">
+          <span class="flabel">Purpose</span><span class="fval">Plan &amp; control process development</span>
+        </div>
+        <div class="field-row" id="process-owner-field" data-tag="ref" data-note="Role title, not a person's name">
+          <span class="flabel">Process Owner</span><span class="fval">ME HEAD</span>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="section-tag">Section 7</div>
+        <div class="section-title">Records Table</div>
+        <table class="mocktable">
+          <tr><th>Record Name</th><th>Format No.</th><th>Maintained By</th></tr>
+          <tr><td>PDDR sheet</td><td>ME_FT_08</td><td>ME</td></tr>
+          <tr id="records-pfmea-row" data-tag="ref" data-note="Go open this exact form to do the work">
+            <td>PFMEA</td><td>ME-FT-96</td><td>ME</td></tr>
+          <tr><td>Control Plan</td><td>ME-FT-112</td><td>ME</td></tr>
+        </table>
+
+        <div class="spacer"></div>
+        <div class="section-tag">Pages 2–3</div>
+        <div class="section-title">Process Flow — 5W1H Table</div>
+        <table class="mocktable">
+          <tr><th>Output</th><th>Who</th><th>When</th><th>Remark</th></tr>
+          <tr>
+            <td>PDDR (ME-FT-08)</td><td>Engineer-Mfg.Engg</td><td>NPD</td>
+            <td id="flow-remark-cell" data-tag="fill" data-note="Fill only if this part deviates from standard">—</td>
+          </tr>
+        </table>
+
+        <div class="spacer"></div>
+        <div class="section-tag">Page 3</div>
+        <div class="section-title">Amendment / Revision History</div>
+        <table class="mocktable">
+          <tr><th>Sr.</th><th>Rev. No.</th><th>Amendment Details</th><th>Authorized By</th></tr>
+          <tr><td>16</td><td>16</td><td>Process review &amp; cover page updated</td><td>Head QA</td></tr>
+          <tr class="empty" id="amendment-new-row" data-tag="fill" data-note="Add a new row every time the document changes">
+            <td>17</td><td>—</td><td>(describe the change here)</td><td>—</td></tr>
+        </table>
+
+        <div class="spacer"></div>
+        <div class="section-tag">Footer</div>
+        <div class="section-title">Sign-off Block</div>
+        <div class="field-row" id="prepared-by-field" data-tag="fill" data-note="Sign at issue — drafted by ME engineer">
+          <span class="flabel">Prepared By</span><span class="fval">Engg. ME</span>
+        </div>
+        <div class="field-row">
+          <span class="flabel">Approved By</span><span class="fval">Head QA</span>
+        </div>
+
+      </div>
+
+      <div class="highlight-box" id="highlightBox"></div>
+      <div class="cursor" id="cursor">
+        <span class="pointer">
+          <svg viewBox="0 0 24 28" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 1 L1 22 L7 17 L11 26 L15 24 L11 15 L19 15 Z" fill="#1B2A41" stroke="white" stroke-width="1.5"/>
+          </svg>
+        </span>
+        <span class="avatar">ME</span>
+      </div>
+      <div class="tag-bubble" id="tagBubble"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="restartBtn">Restart loop</button>
+  </div>
+  <p class="note">This loop auto-plays the same walkthrough as the field guide, in a screen-recordable, marquee-style format. Capture it with OBS/Loom and overlay the voiceover from the companion script to produce the final video.</p>
+
+</div>
+
+<script>
+const ANCHOR = 170;     // px from top of viewport where the active field should land
+const CHROME_H = 0;     // viewport already excludes chrome height
+const DWELL = 2300;     // ms to hold on each field
+const tagColors = { fill:'var(--orange)', ref:'var(--gray)', qa:'var(--steel)' };
+const tagText = { fill:'FILL', ref:'REFERENCE ONLY', qa:'QA CONTROLLED' };
+
+const order = [
+  'doc-no-field','rev-no-field','process-owner-field',
+  'records-pfmea-row','flow-remark-cell','amendment-new-row','prepared-by-field'
+];
+
+const viewport = document.getElementById('viewport');
+const scrollContent = document.getElementById('scrollContent');
+const cursor = document.getElementById('cursor');
+const tagBubble = document.getElementById('tagBubble');
+const highlightBox = document.getElementById('highlightBox');
+
+let timer = null;
+let idx = 0;
+
+function resolveColor(varStr){
+  const v = varStr.replace('var(','').replace(')','');
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function step(){
+  const el = document.getElementById(order[idx]);
+  const tagKind = el.getAttribute('data-tag');
+  const note = el.getAttribute('data-note');
+
+  const maxScroll = Math.max(0, scrollContent.scrollHeight - viewport.clientHeight);
+  let offset = el.offsetTop - ANCHOR;
+  offset = Math.max(0, Math.min(offset, maxScroll));
+
+  scrollContent.style.transform = `translateY(${-offset}px)`;
+
+  const visTop = el.offsetTop - offset;
+  const visLeft = el.offsetLeft;
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+
+  highlightBox.style.left = visLeft + 'px';
+  highlightBox.style.top = visTop + 'px';
+  highlightBox.style.width = w + 'px';
+  highlightBox.style.height = h + 'px';
+  highlightBox.style.opacity = '1';
+
+  const cx = visLeft + w - 10;
+  const cy = visTop + h/2 - 6;
+  cursor.style.left = cx + 'px';
+  cursor.style.top = cy + 'px';
+  cursor.style.opacity = '1';
+
+  tagBubble.textContent = tagText[tagKind] + ' — ' + note;
+  tagBubble.style.background = resolveColor(tagColors[tagKind]);
+  tagBubble.style.left = (cx + 26) + 'px';
+  tagBubble.style.top = (cy - 6) + 'px';
+  tagBubble.style.opacity = '1';
+
+  idx = (idx + 1) % order.length;
+  timer = setTimeout(step, DWELL);
+}
+
+function start(){
+  idx = 0;
+  scrollContent.style.transform = 'translateY(0px)';
+  cursor.style.opacity = '0';
+  tagBubble.style.opacity = '0';
+  highlightBox.style.opacity = '0';
+  clearTimeout(timer);
+  setTimeout(step, 600);
+}
+
+document.getElementById('restartBtn').onclick = start;
+window.addEventListener('load', start);
+</script>
+</body>
+</html>
